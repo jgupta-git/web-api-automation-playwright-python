@@ -1,0 +1,300 @@
+## Tech Stack
+
+Playwright (Python) | pytest | Python 3.10+ | REST API | OrangeHRM Demo | Jenkins
+
+## Overview
+
+Test Target: [OrangeHRM Demo](https://opensource-demo.orangehrmlive.com)  
+Testing Framework: pytest with pytest-playwright  
+Language: Python 3.10+  
+Architecture: Page Object Model (POM) for UI flows, service classes for REST API calls  
+Test Organization: pytest test functions, sharing one browser page per test file  
+Test Data: one random employee per test run, shared by all tests  
+Scope: selected OrangeHRM web flows and REST API calls (not the full application)
+
+\---
+
+## Test Scenarios
+
+### UI Tests
+
+|Scenario|Module|Test Name|
+|-|-|-|
+|Login and logout|Authentication|test\_login\_logout|
+|Create new employee|Employee Management|test\_create\_employee|
+|Search employee by first name|Employee Management|test\_search\_employee|
+|Upload employee photo|Employee Management|test\_upload\_employee\_image|
+|Verify photo and name on dashboard|Employee Dashboard|test\_login\_as\_new\_employee\_check\_uploaded\_image|
+|Download report as PDF|Reports|test\_download\_report|
+
+### REST API Tests
+
+|Scenario|Endpoint|Test Name|
+|-|-|-|
+|Create employee|POST `/api/v2/pim/employees`|test\_create\_employee\_via\_api|
+|Get defined report details|GET `/api/v2/pim/reports/defined/{id}`|test\_defined\_report\_details|
+|Get report data|GET `/api/v2/pim/reports/data`|test\_generate\_report\_data|
+
+\---
+
+## Project Structure
+
+```
+web-api-automation-playwright-python/
+├── .gitignore                          # Ignores .venv, downloads, reports and caches
+├── Jenkinsfile                         # Jenkins pipeline (setup, test, publish results)
+├── pytest.ini                          # pytest configuration
+├── requirements.txt                    # Pinned Python dependencies
+├── README.md                           # This file
+├── src/
+│   ├── assets/
+│   │   └── av1.png                     # Sample photo for upload tests
+│   ├── pages/
+│   │   ├── createNewEmployee.py        # Add employee form
+│   │   ├── downloadReports.py          # Report view and PDF export
+│   │   ├── employeeDashboard.py        # Dashboard and profile checks
+│   │   ├── login.py                    # Login page
+│   │   ├── logout.py                   # Logout menu
+│   │   ├── searchEmployee.py           # Employee search and results
+│   │   └── uploadEmployeeImage.py      # Photo upload
+│   └── services/
+│       ├── employee_api.py             # REST API: create employee
+│       ├── input.py                    # Test users and employee data
+│       └── report_api.py               # REST API: report details and data
+└── tests/
+    ├── conftest.py                     # Shared fixtures (shared_page, employee_data)
+    ├── test_download_report.py         # Report download test
+    ├── test_employee_api.py            # Create employee through the API
+    ├── test_employee_transactions.py   # UI employee create, search, upload, dashboard
+    ├── test_login_logout.py            # Login and logout test
+    └── test_report_api.py              # Report API tests
+```
+
+## Key Files
+
+### Page Objects (src/pages/)
+
+* login.py — Login form and `user_login()` method
+* logout.py — Logout menu and confirmation
+* createNewEmployee.py — Employee creation form
+* searchEmployee.py — Employee search and results table
+* uploadEmployeeImage.py — Photo upload from the employee record
+* employeeDashboard.py — Dashboard text, profile picture, and employee name checks
+* downloadReports.py — Report navigation, view, and PDF export
+
+### Services (src/services/)
+
+* input.py — `TestData` with the login users and `EmployeeData` for the random employee
+* employee\_api.py — `EmployeeApi.create_employee()` calls the employee REST endpoint
+* report\_api.py — `ReportApi` calls the report REST endpoints
+
+### Fixtures (tests/conftest.py)
+
+* `shared_page` — one browser page per test file, so tests in a file continue from each other
+* `employee_data` — one random employee per test session, used by every test in the run
+
+### Test Files (tests/)
+
+* test\_login\_logout.py — Login and logout flow
+* test\_employee\_transactions.py — Create, search, upload, and dashboard checks, in order
+* test\_download\_report.py — Report view and PDF export
+* test\_employee\_api.py — Creates an employee through the REST API
+* test\_report\_api.py — Report details and report data through the REST API
+
+\---
+
+## Quick Start
+
+### 1\. Prerequisites
+
+* ✅ Python 3.10+ — Required for the test code
+* ✅ pip — Package manager, included with Python
+* ✅ Internet connectivity — Tests run against OrangeHRM Demo
+
+### 2\. Installation
+
+```cmd
+:: Create and activate a virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+:: Install dependencies
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
+:: Install the Chromium browser used by Playwright
+python -m playwright install chromium
+```
+
+On Linux or macOS, activate the environment with `source .venv/bin/activate`.
+
+### 3\. Configure Test Data
+
+Edit `src/services/input.py` to update:
+
+* VALID\_USER — OrangeHRM demo credentials
+* EMPLOYEE\_DATA — default employee details (the run replaces the ID with a random one)
+
+### 4\. Run Tests
+
+#### Run All Tests
+
+```cmd
+python -m pytest
+```
+
+#### Run One Test File
+
+```cmd
+python -m pytest tests/test_employee_transactions.py
+```
+
+#### Run Only the API Tests
+
+```cmd
+python -m pytest tests/test_employee_api.py tests/test_report_api.py
+```
+
+#### Run with a Visible Browser
+
+```cmd
+python -m pytest --headed
+```
+
+The download test exports a PDF, which Chromium supports only in headless mode. Run that test without `--headed`.
+
+#### Save Results for Jenkins
+
+```cmd
+python -m pytest --junitxml=report.xml
+```
+
+\---
+
+## Test Execution Flow
+
+### Sequential Employee Tests (test\_employee\_transactions.py)
+
+Tests run in file order and depend on each other:
+
+1. `test_create_employee` — Creates the employee with the shared random name and logs out
+2. `test_search_employee` — Logs in and searches for the same name
+3. `test_upload_employee_image` — Logs out, logs in, and uploads the photo to that employee
+4. `test_login_as_new_employee_check_uploaded_image` — Logs in as the new employee and checks the dashboard
+
+Run the file as a whole. Running one test alone can fail if the test needs a state an earlier test creates.
+
+### Shared Page and Login
+
+`shared_page` keeps one browser page for the whole test file. Each test logs out first if the previous test left the page logged in, then logs in with the account it needs.
+
+### Random Employee Data
+
+The `employee_data` fixture generates a random ID once per run:
+
+```python
+def test_search_employee(shared_page, employee_data):
+    search_page = searchEmployeePage(shared_page)
+    search_page.fillEmployeeDetailsToSearch(employee_data.first_name)
+```
+
+Every test that asks for `employee_data` receives the same employee, so a name created in one test can be searched in another.
+
+\---
+
+## Page Object Model (POM) Pattern
+
+Each page object wraps the locators and actions for one page:
+
+```python
+class loginPage:
+    def __init__(self, page: Page):
+        self.page = page
+        self.username_input = page.get_by_role("textbox", name="Username")
+        self.password_input = page.get_by_role("textbox", name="Password")
+        self.login_button = page.get_by_role("button", name="Login")
+
+    def user_login(self, username: str, password: str) -> None:
+        self.username_input.fill(username)
+        self.password_input.fill(password)
+        self.login_button.click()
+```
+
+Benefits:
+
+* Locators are centralized in one place
+* Easy to update when the UI changes
+* Reusable across multiple tests
+* Clear separation of concerns
+
+\---
+
+## REST API Calls
+
+The API tests use the same browser session as the UI tests, so the login cookie authenticates the requests:
+
+```python
+@pytest.fixture(scope="module")
+def report_api(shared_page):
+    # Log in once through the UI; the browser cookie authenticates the API calls
+    ...
+    return ReportApi(shared_page.request)
+```
+
+`shared_page.request` is Playwright's request client, which shares cookies with the browser page.
+
+\---
+
+## Configuration
+
+### pytest.ini
+
+```ini
+[pytest]
+pythonpath = .
+```
+
+`pythonpath = .` lets test files import the `src` package from the project root.
+
+### requirements.txt
+
+Pinned versions generated with `python -m pip freeze`. After you add a package, regenerate the file:
+
+```cmd
+python -m pip install <package-name>
+python -m pip freeze > requirements.txt
+```
+
+\---
+
+## Jenkins
+
+The `Jenkinsfile` runs three stages:
+
+1. **Setup** — creates a virtual environment, installs `requirements.txt`, and installs Chromium
+2. **Test** — runs `python -m pytest --junitxml=report.xml`
+3. **Post** — publishes the JUnit results and archives the `downloads/` folder
+
+Create a **Pipeline** job in Jenkins, set **Pipeline script from SCM** to Git, and point it at this repository. Jenkins uses the Linux shell steps (`sh`), so the agent must run Linux or macOS.
+
+\---
+
+## References
+
+* Playwright for Python: [playwright.dev/python](https://playwright.dev/python)
+* pytest: [docs.pytest.org](https://docs.pytest.org)
+* pytest-playwright: [playwright.dev/python/docs/test-runners](https://playwright.dev/python/docs/test-runners)
+* OrangeHRM Demo: [opensource-demo.orangehrmlive.com](https://opensource-demo.orangehrmlive.com)
+* Page Object Model: [selenium.dev/documentation](https://www.selenium.dev/documentation/test_practices/encouraged/page_object_models/)
+
+\---
+
+## GitHub Repository
+
+```
+https://github.com/jgupta-git/web-api-automation-playwright-python
+```
+
+\---
+
+Last Updated: 2026-10-17 | Built with Playwright • pytest • Page Object Model
