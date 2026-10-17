@@ -9,6 +9,7 @@ from src.pages.uploadEmployeeImage import uploadEmployeeImagePage
 from src.services.input import TestData
 
 
+# test employee transactions
 def test_create_employee(shared_page, employee_data):
     user_login_page = loginPage(shared_page)
     addEmployee = createEmployeePage(shared_page)
