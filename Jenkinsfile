@@ -8,6 +8,7 @@ pipeline {
                     call .venv\\Scripts\\activate.bat
                     python -m pip install --upgrade pip
                     python -m pip install -r requirements.txt
+                    python -m pip install pytest-html
                     python -m playwright install chromium
                 '''
             }
@@ -16,7 +17,7 @@ pipeline {
             steps {
                 bat '''
                     call .venv\\Scripts\\activate.bat
-                    python -m pytest --junitxml=report.xml
+                    python -m pytest --junitxml=report.xml --html=report.html --self-contained-html --tracing=on --screenshot=on
                 '''
             }
         }
@@ -24,7 +25,7 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'report.xml'
-            archiveArtifacts artifacts: 'downloads/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'report.html, test-results/**, downloads/**', allowEmptyArchive: true
         }
     }
 }
