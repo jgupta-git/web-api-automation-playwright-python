@@ -1,0 +1,5 @@
+.venv/
+downloads/
+report.xml
+__pycache__/
+.pytest_cache/
