@@ -21,16 +21,10 @@ class searchEmployeePage:
         try:
             self.page.wait_for_load_state("networkidle")
 
-            # Check if "Record Found" message appears
-            record_found = (
-                self.page.locator("div")
-                .filter(has_text=re.compile(r"Record Found"))
-                .first.is_visible()
-            )
-
-            if not record_found:
-                print("❌ No record found message displayed")
-                return False
+            # Wait up to 15 seconds for the "Record Found" message
+            self.page.locator("div").filter(
+                has_text=re.compile(r"Record Found")
+            ).first.wait_for(timeout=15000)
 
             # Get firstName from 3rd column
             table_first_name = self.page.locator(
