@@ -23,7 +23,7 @@ class searchEmployeePage:
 
             # Wait up to 15 seconds for the "Record Found" message
             self.page.locator("div").filter(
-                has_text=re.compile(r"Record Found")
+                has_text=re.compile(r"Records? Found")
             ).first.wait_for(timeout=15000)
 
             # Get firstName from 3rd column

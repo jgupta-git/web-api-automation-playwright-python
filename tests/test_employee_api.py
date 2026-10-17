@@ -21,12 +21,13 @@ def employee_api(shared_page):
 
 
 def test_create_employee_via_api(employee_api, employee_data):
+    first_name = f"Api{employee_data.id}"
     employee_id = f"{random.randrange(10**9):09d}"
     employee = employee_api.create_employee(
-        employee_data.first_name, employee_data.last_name, employee_id
+        first_name, employee_data.last_name, employee_id
     )
 
     assert employee["empNumber"]
-    assert employee["firstName"] == employee_data.first_name
+    assert employee["firstName"] == first_name
     assert employee["lastName"] == employee_data.last_name
     assert employee["employeeId"] == employee_id
