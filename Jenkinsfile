@@ -3,19 +3,19 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
+                bat '''
+                    python -m venv .venv
+                    call .venv\\Scripts\\activate.bat
                     python -m pip install --upgrade pip
                     python -m pip install -r requirements.txt
-                    python -m playwright install --with-deps chromium
+                    python -m playwright install chromium
                 '''
             }
         }
         stage('Test') {
             steps {
-                sh '''
-                    . .venv/bin/activate
+                bat '''
+                    call .venv\\Scripts\\activate.bat
                     python -m pytest --junitxml=report.xml
                 '''
             }
