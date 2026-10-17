@@ -103,6 +103,11 @@ web-api-automation-playwright-python/
 
 \---
 
+## Test Reports
+
+**[HTML Test Report](https://htmlpreview.github.io/?https://github.com/jgupta-git/web-api-automation-playwright-python/blob/main/report.html=&sort=result)**
+
+---
 ## Quick Start
 
 ### 1\. Prerequisites
